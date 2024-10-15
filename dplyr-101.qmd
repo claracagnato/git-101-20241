@@ -150,7 +150,7 @@ white_wine |>
 ```{r}
 #| eval: false
 white_wine |> 
-  select(where(\(x) is.numeric(x) & (max(x) < 5)))
+  select(where(\(x) is.numeric(x) & (max(x) < 5))) #for each columns of the data frame produice TRUE or FALSE consedering if it is numeric and inferior at 5.
 ```
 
 ### Selecting rows
@@ -204,5 +204,38 @@ white_wine |>
   geom_point(alpha=0.75) +
   scale_color_viridis_c() +
   facet_wrap(vars(`alcohol category`))
+```
+
+## Aggregation functions 
+AKA summary functions: turn a possibly long vector into a single value (still a vector!).
+- standard stats: `max()`, `min()`, `median()``
+- logical operations: `àny()` and `all()`
+- counts and ranks: `n()``
+
+### simple summary use
+based on the `summarise()` function or inside a `mutate()` call.
+
+```{r}
+white_wine %>% summarise(
+  med_alcohol = median(alcohol),
+  sd(alcohol))
+```
+
+
+
+```{r}
+white_wine %>% 
+  select(alcohol) %>%
+  mutate(a_m_median= alcohol - median(alcohol),
+         .keep ="none")
+```
+
+
+```{r}
+white_wine %>% 
+  select(alcohol) %>%
+  mutate(na= (alcohol - mean(alcohol))/sd(alcohol),
+         na_r = (alcohol - median(alcohol))/IQR(alcohol),
+         .keep = "none")
 ```
 
