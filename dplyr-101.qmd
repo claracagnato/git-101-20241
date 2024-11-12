@@ -551,3 +551,51 @@ Diamonds_price_cut%>%
 ```
 
 
+## Mutiple tables
+```{r}
+#| message: false
+Product <- vroom(here("data", "northwind", "products.csv"))
+```
+The `ProductID`column is the $$primary key$$ of the `product`table.
+
+```{r}
+PID_nb <- Product %>% 
+  select(ProductID) %>%
+  filter(!is.na(ProductID) & !is.null(ProductID)) %>%
+  distinct(ProductID) %>%
+  nrow()
+
+```
+
+Is `ProductID`a valid **primaey key**: `r pid_nb == nrow(products)``
+
+### Foreign keys
+
+```{r}
+#| message: false
+library(readr)
+Categories <- read_csv(here("data", "northwind", "Categories.csv"), 
+                       col_types = "icc-")
+```
+
+`products`table has a `CategoryID`column which is likely to be a foreign key referencing the primary key of categories
+
+### Join 
+A **join** operation is a way to combine 2 tables into a single one by selecting a subset of the Cartesian product btw the 2 tables.
+
+The **natural join** selects only pairs of tuples that have the same values on columns that have 
+ìnner_join` in dplyr 
+```{r}
+p_c <- Product %>%
+  inner_join(CategoryID= CategoryID -1) %>%
+  inner_join(Categories)
+```
+IN this case, as expected, puples with no match are removed from the result. 
+We can verify that `CategoryID`is a foreign key by counting the number of tuples in the result. Here this is : `r nrow(p_c) == nrows(products)`
+
+```{r}
+#| message: false
+Supplier <- vroom(here("data", "northwind", "suppliers.csv"))
+```
+
+
