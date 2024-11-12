@@ -400,3 +400,154 @@ diamonds %>%
   arrange(cut, color)
 ```
 
+## Tidying data
+```{r}
+library(tidyr)
+```
+
+### long to wide table (pivoting)
+
+```{r}
+color_given_cut <-
+diamonds %>%
+  group_by(cut, color) %>%
+  summarise(N=n(), .groups="drop_last") %>%
+  mutate(prob=N/sum(N)) %>%
+  ungroup()
+View(color_given_cut)
+```
+
+
+```{r}
+color_given_cut %>%
+  select(!N) %>%
+  pivot_wider(id_cols = cut,
+              names_from = color, 
+              values_from = prob)
+```
+```{r}
+color_given_cut %>%
+  select(!N) %>%
+  slice_sample(n=30) %>%
+  pivot_wider(id_cols = cut,
+              names_from = color, 
+              values_from = prob)
+```
+
+### wide to long 
+```{r}
+data("world_bank_pop")
+```
+
+```{r}
+world_bank_pop %>%
+  filter(indicator == "SP.POP.TOTL") %>%
+  filter(country %in% c("ESP", "FRA")) %>%
+  select(!indicator)
+
+  
+```
+```{r}
+world_bank_pop %>%
+  filter(indicator == "SP.POP.TOTL") %>%
+  filter(country %in% c("ESP", "FRA")) %>%
+  select(!indicator) %>%
+  pivot_longer(!country, names_to= "year", names_transform= as.integer,
+               values_to= "total population") %>%
+  filter(country=="ESP")%>%
+  ggplot(aes(x=year, y=`total population`)) +
+  geom_line()
+```
+```{r}
+world_bank_pop %>%
+  filter(country %in% c("ESP", "FRA")) %>%
+  pivot_longer(!country & !indicator)
+```
+
+
+
+```{r}
+world_bank_pop %>%
+  filter(indicator == "SP.POP.TOTL") %>%
+  filter(country %in% c("ESP", "FRA")) %>%
+  select(!indicator) %>%
+  filter(!is.na(2000)) %>%
+  slice_sample(n=10, weight_by =`2000`)%>%
+  pivot_longer(!country, names_to= "year", names_transform= as.integer,
+               values_to= "total population", color= country) +
+  geom_line()+
+  ggplot(aes(x=year, y=`total population`)) +
+  geom_line()
+```
+
+
+
+## Nesting
+```{r}
+class(diamonds)
+```
+
+```{r}
+df_list <- tibble(x= 1 : 3,
+                  y= letters[1:3],
+                  z= list(c(1,2),c("Alice", "Bob", "Charlie"),3))
+df_list
+```
+```{r}
+list(1,2, "c")
+```
+```{r}
+daf_list <- data_frame(x= 1 : 3,
+                  y= letters[1:3],
+                  z= I(list(c(1,2),c("Alice", "Bob", "Charlie"),3)))
+daf_list
+```
+### Linear models
+```{r}
+diamonds_price_lm <- lm(price ~ ., data = diamonds) # le point c'est toutes les autres
+```
+
+
+```{r}
+diamonds_price_lm
+```
+```{r}
+summary(diamonds_price_lm)
+```
+```{r}
+plot(diamonds_price_lm)
+```
+
+Create a lineaire model for a subset of the diamaonds df indentified as the cut of the diamond dF
+```{r}
+diamonds %>% nest(.by=cut)
+```
+```{r}
+Diamonds_price_cut <- diamonds %>% 
+  nest(.by=cut) %>% 
+  mutate(sub_lm = lapply(data, \(x) lm(price ~., data=x)))
+Diamonds_price_cut
+```
+```{r}
+library(broom)
+```
+```{r}
+Diamonds_price_cut<- Diamonds_price_cut %>% 
+  mutate(tlm = lapply(sub_lm, tidy))
+```
+
+```{r}
+Diamonds_price_cut%>% 
+  select(cut, tlm) %>%
+  unnest(tlm)
+```
+```{r}
+Diamonds_price_cut%>% 
+  select(cut, tlm) %>%
+  unnest(tlm) %>%
+  filter(p.value < 0.05) %>%
+  select(cut, term, estimate) %>%
+  pivot_wider(names_from = term, values_from = estimate)
+```
+
+
